@@ -15,8 +15,8 @@
 | **Web Content Extractor** | ดึงหน้าเว็บ สกัดข้อเท็จจริงพร้อมที่มา (รหัสแหล่ง [n], URL, วันที่เข้าถึง) | `web_fetch` |
 | **Content Writer** | เขียนบทความพร้อม citation `[n]` และรายการอ้างอิง (ตอบเป็น Markdown ล้วน) | — |
 | **Publisher** | บันทึกไฟล์ลงดิสก์ตามเนื้อหาที่ได้รับ | `file_write` |
-| **Fact and Citation Auditor** | ผู้ตรวจบุคลิกสงสัย ตรวจข้อเท็จจริงและ citation เทียบกับแหล่งจริง | `web_fetch`, `searxng_search` |
-| **Reader-Advocate Editor** | ผู้ตรวจบุคลิกตัวแทนผู้อ่าน ตรวจความชัดเจน โครงสร้าง น้ำเสียง | — |
+| **Fact and Citation Auditor** | ผู้ตรวจบุคลิกสงสัย ตรวจข้อเท็จจริงและ citation เทียบกับแหล่งจริง | `file_read`, `web_fetch`, `searxng_search` |
+| **Reader-Advocate Editor** | ผู้ตรวจบุคลิกตัวแทนผู้อ่าน ตรวจความชัดเจน โครงสร้าง น้ำเสียง | `file_read` |
 
 ลำดับงาน: ค้นหา → ดึงและสกัดข้อมูล → เขียน → (บันทึก draft) + ตรวจโดยผู้ตรวจ 2 คน → แก้ไข → บันทึกฉบับสุดท้ายและรายงานผลตรวจ
 
@@ -94,6 +94,7 @@ SEARXNG_URL=http://192.168.1.20:8080 CREW_MODEL=openai/qwen3-14b python main.py
 | **ไฟล์ผลลัพธ์** | | |
 | `ARTICLE_OUTPUT_DIR` | `output` | path แบบ relative อิงจากโฟลเดอร์โปรเจกต์ |
 | `MIN_ARTICLE_CHARS` | `500` | ความยาวขั้นต่ำของบทความที่ `file_write` ยอมบันทึก |
+| `FILE_READ_MAX_CHARS` | `8000` | จำนวนตัวอักษรต่อการเรียก `file_read` หนึ่งครั้ง (สูงสุด 20000) ไฟล์ยาวอ่านต่อด้วย `offset` |
 | **Crew / บทความ** | | |
 | `CREW_VERBOSE` | `true` | แสดงขั้นตอนการทำงานของ agent |
 | `ARTICLE_TOPIC` | `แนวโน้ม Local LLM สำหรับงาน Edge AI` | |
@@ -112,7 +113,8 @@ article_crew/
 └── tools/
     ├── searxng_tool.py        # ค้นหาผ่าน SearXNG
     ├── web_fetch_tool.py      # ดึงและสกัดเนื้อหาเว็บ
-    └── file_writer_tool.py    # เขียนไฟล์ + guard ตรวจบทความ
+    ├── file_writer_tool.py    # เขียนไฟล์ + guard ตรวจบทความ
+    └── file_reader_tool.py    # อ่านไฟล์ใน output (ให้ผู้ตรวจเปิดอ่านบทความ)
 ```
 
 ## กลไกความปลอดภัยและความถูกต้อง
@@ -123,6 +125,9 @@ article_crew/
 - **`file_write`** เขียนได้เฉพาะภายใน `ARTICLE_OUTPUT_DIR` และนามสกุล `.md` `.txt` `.json`
   ไฟล์บทความ (`article*.md` และไฟล์ใน `drafts/`) จะถูกปฏิเสธถ้าสั้นกว่า `MIN_ARTICLE_CHARS`
   หรือไม่มีส่วน "แหล่งอ้างอิง" เพื่อจับกรณี LLM ส่งต่อเนื้อหาไม่ครบ
+- **`file_read`** อ่านได้เฉพาะภายใน `ARTICLE_OUTPUT_DIR` และนามสกุล `.md` `.txt` `.json` (กัน path traversal)
+  ผู้ตรวจทั้งสองใช้เปิดอ่านบทความจากไฟล์ตรง ๆ แทนข้อความที่ Manager พิมพ์ส่งต่อ ไฟล์ยาวอ่านทีละช่วงด้วย `offset`
+  และใส่ `filename='.'` เพื่อดูรายชื่อไฟล์ได้
 - ควรเปิดตรวจ citation สำคัญด้วยตัวเองก่อนเผยแพร่ เพราะผู้ตรวจเป็น LLM และตรวจได้แค่ตามที่ `web_fetch` ดึงมาได้
   (หน้าที่ต้อง login หรือโหลดด้วย JavaScript จะดึงเนื้อหาไม่ได้)
 

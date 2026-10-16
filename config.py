@@ -83,6 +83,7 @@ ALLOW_PRIVATE_FETCH = _bool("ALLOW_PRIVATE_FETCH", False)
 # ---------- File output ----------
 ARTICLE_OUTPUT_DIR = _path("ARTICLE_OUTPUT_DIR", "output")  # path แบบ relative อิงจากโฟลเดอร์โปรเจกต์
 MIN_ARTICLE_CHARS = _int("MIN_ARTICLE_CHARS", 500)
+FILE_READ_MAX_CHARS = _int("FILE_READ_MAX_CHARS", 8000)  # ตัวอักษรต่อการเรียก file_read หนึ่งครั้ง (สูงสุด 20000)
 
 # ---------- Crew / บทความที่ต้องการ ----------
 CREW_VERBOSE = _bool("CREW_VERBOSE", True)

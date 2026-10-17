@@ -82,11 +82,49 @@ ALLOW_PRIVATE_FETCH = _bool("ALLOW_PRIVATE_FETCH", False)
 
 # ---------- File output ----------
 ARTICLE_OUTPUT_DIR = _path("ARTICLE_OUTPUT_DIR", "output")  # path แบบ relative อิงจากโฟลเดอร์โปรเจกต์
-MIN_ARTICLE_CHARS = _int("MIN_ARTICLE_CHARS", 500)
-FILE_READ_MAX_CHARS = _int("FILE_READ_MAX_CHARS", 8000)  # ตัวอักษรต่อการเรียก file_read หนึ่งครั้ง (สูงสุด 20000)
+FINAL_ARTICLE_FILE = "article.md"  # ชื่อไฟล์บทความฉบับสุดท้าย (เขียนได้ผ่าน publish_article เท่านั้น)
+SOURCES_FILE = Path(_get("SOURCES_FILE", "sources.md")).name  # เขียนได้ผ่าน sources_add เท่านั้น
+ARCHIVE_PREVIOUS_RUN = _bool("ARCHIVE_PREVIOUS_RUN", True)  # ย้ายผลลัพธ์รอบก่อนไป output/archive/<เวลา>/
+FILE_READ_MAX_CHARS = _int("FILE_READ_MAX_CHARS", 8000)  # ต่อการอ่าน 1 ครั้ง (อ่านต่อด้วย offset)
+
+# ---------- ข้อกำหนดของบทความ ----------
+# ขนาดนับเฉพาะเนื้อหา (ไม่รวมส่วน "แหล่งอ้างอิง") และไม่นับช่องว่าง/ขึ้นบรรทัดใหม่
+ARTICLE_MIN_CHARS = _int("ARTICLE_MIN_CHARS", 3000)
+ARTICLE_MAX_CHARS = _int("ARTICLE_MAX_CHARS", 8000)
+# จำนวนแหล่งอ้างอิงขั้นต่ำที่ "ใช้ได้จริง" = ไม่ซ้ำกัน, ถูกอ้างในเนื้อหา, มี URL, (และมีอยู่ใน sources.md)
+CITATION_MIN_COUNT = _int("CITATION_MIN_COUNT", 5)
+CITATION_REQUIRE_IN_SOURCES = _bool("CITATION_REQUIRE_IN_SOURCES", True)
+# "รอบ" = จำนวนครั้งที่ Content Writer แก้ไขฉบับร่าง
+REVISION_MAX_ROUNDS = _int("REVISION_MAX_ROUNDS", 3)  # ครบแล้ว + citation ผ่าน → อนุโลมให้เผยแพร่
+CITATION_MAX_FIX_ROUNDS = _int("CITATION_MAX_FIX_ROUNDS", 6)  # ครบแล้วยัง citation/ขนาดไม่ผ่าน → ไม่เผยแพร่
 
 # ---------- Crew / บทความที่ต้องการ ----------
 CREW_VERBOSE = _bool("CREW_VERBOSE", True)
+# จำนวนรอบการคิด/เรียก tool สูงสุดต่อ agent (Manager ต้องสูงเพราะ delegate หลายครั้ง)
+MANAGER_MAX_ITER = _int("MANAGER_MAX_ITER", 60)
+AGENT_MAX_ITER = _int("AGENT_MAX_ITER", 30)
 ARTICLE_TOPIC = _get("ARTICLE_TOPIC", "แนวโน้ม Local LLM สำหรับงาน Edge AI")
 ARTICLE_AUDIENCE = _get("ARTICLE_AUDIENCE", "นักศึกษาและนักพัฒนาซอฟต์แวร์")
 ARTICLE_LANGUAGE = _get("ARTICLE_LANGUAGE", "ภาษาไทย (ศัพท์เทคนิคใช้ภาษาอังกฤษได้)")
+
+
+# ---------- ตรวจความสมเหตุสมผลของค่าที่ตั้ง ----------
+def _fail(msg: str) -> None:
+    raise SystemExit(f"[config] ค่าตั้งไม่ถูกต้อง: {msg}")
+
+
+if ARTICLE_MIN_CHARS < 1:
+    _fail("ARTICLE_MIN_CHARS ต้องมากกว่า 0")
+if ARTICLE_MIN_CHARS > ARTICLE_MAX_CHARS:
+    _fail(f"ARTICLE_MIN_CHARS ({ARTICLE_MIN_CHARS}) ต้องไม่เกิน ARTICLE_MAX_CHARS ({ARTICLE_MAX_CHARS})")
+if CITATION_MIN_COUNT < 1:
+    _fail("CITATION_MIN_COUNT ต้องมากกว่า 0")
+if REVISION_MAX_ROUNDS < 0:
+    _fail("REVISION_MAX_ROUNDS ต้องไม่ติดลบ")
+if CITATION_MAX_FIX_ROUNDS < REVISION_MAX_ROUNDS:
+    print(
+        f"[config] CITATION_MAX_FIX_ROUNDS ({CITATION_MAX_FIX_ROUNDS}) น้อยกว่า REVISION_MAX_ROUNDS "
+        f"({REVISION_MAX_ROUNDS}) ปรับเป็น {REVISION_MAX_ROUNDS}",
+        file=sys.stderr,
+    )
+    CITATION_MAX_FIX_ROUNDS = REVISION_MAX_ROUNDS

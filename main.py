@@ -81,15 +81,17 @@ researcher = Agent(
 extractor = Agent(
     role="Web Content Extractor",
     goal=(
-        "ดึงเนื้อหาจากทุก URL ที่ได้รับด้วย web_fetch แล้วบันทึกข้อเท็จจริง ตัวเลข และคำพูดสั้น ๆ ที่ใช้ได้จริง "
-        "ลง sources.md ด้วย sources_add (ทีละ URL) จากนั้นรายงานเลข [ID] ที่ได้และจำนวนแหล่งทั้งหมดใน sources.md"
+        "เปิด sources.md ด้วย file_read ดูก่อนว่ามี URL ใดบันทึกไว้แล้วบ้าง จากนั้นดึงเนื้อหาจาก URL ที่ได้รับ "
+        "ด้วย web_fetch แล้วบันทึกข้อเท็จจริง ตัวเลข และคำพูดสั้น ๆ ที่ใช้ได้จริงลง sources.md ด้วย sources_add (ทีละ URL) "
+        "สุดท้ายเปิด sources.md อีกครั้งเพื่อยืนยันผล แล้วรายงานเลข [ID] ที่ได้และจำนวนแหล่งทั้งหมด"
     ),
     backstory=(
         "คุณเป็นนักวิเคราะห์ข้อมูลที่ละเอียด อ่านหน้าเว็บแล้วแยกข้อเท็จจริงออกจากความเห็น "
         "บันทึกเฉพาะสิ่งที่มีในหน้าเว็บจริง ไม่เติมหรือเดาข้อมูล และจะไม่บันทึก URL ที่ดึงไม่สำเร็จ "
+        "ถ้า URL ใดมีใน sources.md อยู่แล้ว คุณจะข้ามหรือเพิ่มเฉพาะข้อมูลใหม่ที่ยังไม่มี ไม่บันทึกซ้ำ "
         + UNTRUSTED_NOTE
     ),
-    tools=[fetch_tool, sources_tool],
+    tools=[fetch_tool, sources_tool, read_tool],
     allow_delegation=False,
     max_iter=config.AGENT_MAX_ITER,
     llm=llm,

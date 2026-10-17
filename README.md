@@ -12,7 +12,7 @@
 |---|---|---|
 | **Content Manager** | รับงาน delegate ให้ทีม ตัดสินตามกฎการอนุมัติ (ห้ามปล่อยงานที่ citation ไม่ผ่าน) | — |
 | **Research Specialist** | ค้นหาและคัดเลือก URL ใหม่ที่ยังไม่อยู่ใน `sources.md` (ค้นเพิ่มตามคำแนะนำได้) | `searxng_search`, `file_read` |
-| **Web Content Extractor** | ดึงหน้าเว็บ สกัดข้อเท็จจริง และเพิ่มลง `sources.md` | `web_fetch`, `sources_add` |
+| **Web Content Extractor** | ดึงหน้าเว็บ สกัดข้อเท็จจริง และเพิ่มลง `sources.md` (อ่านไฟล์เดิมก่อนเพื่อไม่ดึงซ้ำ) | `web_fetch`, `sources_add`, `file_read` |
 | **Content Writer** | เขียน/แก้บทความจาก `sources.md` พร้อม citation (ตอบเป็น Markdown ล้วน ไม่บันทึกไฟล์) | `file_read` (อ่านอย่างเดียว) |
 | **Publisher** | บันทึกฉบับร่าง รายงานผลตรวจ และเผยแพร่ฉบับสุดท้าย (เรียงเลข citation ใหม่ให้) | `file_write`, `publish_article` |
 | **Fact and Citation Auditor** | ผู้ตรวจบุคลิกสงสัย: ตรวจข้อเท็จจริงเทียบแหล่ง และรายงานจำนวน citation ที่ใช้ได้จริงจาก `article_check` | `article_check`, `file_read`, `web_fetch`, `searxng_search` |
